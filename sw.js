@@ -1,10 +1,10 @@
-const CACHE_NAME = 'autobeheer-v2';
+const CACHE_NAME = 'autobeheer-v3';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/autobeheer/',
+  '/autobeheer/index.html',
+  '/autobeheer/manifest.json',
+  '/autobeheer/icon-192.png',
+  '/autobeheer/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
