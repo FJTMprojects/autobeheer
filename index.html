@@ -566,16 +566,16 @@
   }
   function checkSession(){
     if(sessionStorage.getItem(SESSION_KEY)==='ok'){
-      // Load drivers first then show step 2 or go straight to app if user already chosen
       const savedUser=sessionStorage.getItem('currentUser');
-      if(savedUser){showApp();}
-      else{
-        loadAll().then(()=>{
-          document.getElementById('login-screen').style.display='flex';
-          showDriverButtons();
-          document.getElementById('login-step1').style.display='none';
-          document.getElementById('login-step2').style.display='block';
-        });
+      if(savedUser){
+        showApp();
+      } else {
+        // Toon naamkeuze direct, laad data op achtergrond
+        document.getElementById('login-screen').style.display='flex';
+        document.getElementById('login-step1').style.display='none';
+        document.getElementById('login-step2').style.display='block';
+        showDriverButtons();
+        loadAll().then(()=>showDriverButtons());
       }
     }
   }
@@ -585,10 +585,12 @@
     if(val===PASSWORD){
       sessionStorage.setItem(SESSION_KEY,'ok');
       document.getElementById('login-error').textContent='';
-      // Load drivers for step 2
+      // Toon stap 2 direct met huidige drivers (worden op achtergrond bijgewerkt)
+      document.getElementById('login-step1').style.display='none';
+      document.getElementById('login-step2').style.display='block';
+      showDriverButtons();
+      // Laad data op achtergrond en update knoppen als drivers veranderd zijn
       loadAll().then(()=>{
-        document.getElementById('login-step1').style.display='none';
-        document.getElementById('login-step2').style.display='block';
         showDriverButtons();
       });
     } else {
@@ -607,7 +609,17 @@
   }
   function selectDriver(name){
     sessionStorage.setItem('currentUser', name);
-    showApp();
+    // Toon app direct, data wordt al geladen op achtergrond
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    const headerUser=document.getElementById('header-user');
+    if(headerUser) headerUser.textContent=`Ingelogd als ${name}`;
+    // Als data al geladen is, render dashboard. Anders wacht op loadAll
+    if(state.loaded){renderDashboard();}
+    else{
+      document.getElementById('dash-content').innerHTML='<div class="loading">Gegevens laden...</div>';
+      loadAll().then(()=>renderDashboard());
+    }
   }
   function doLogin(){
     const val=document.getElementById('login-input').value.trim().toLowerCase();
