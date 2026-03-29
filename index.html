@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autobeheer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #E8FF00;
+      --accent-dark: #c8dc00;
+      --accent-text: #111100;
+      --bg: #0e0e10;
+      --bg-card: #18181c;
+      --bg-card2: #222226;
+      --text: #f0f0f0;
+      --text-secondary: #80808a;
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.16);
+      --green: #1D9E75;
+      --green-bg: rgba(29,158,117,0.12);
+      --green-text: #4ecf9e;
+      --red: #E24B4A;
+      --radius: 14px;
+      --radius-lg: 18px;
+      --tap-target: 52px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; }
+
+    /* ── LOGIN ── */
+    .login-screen {
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+    }
+    .login-bg {
+      position: absolute; inset: 0;
+      background-color: #0e0e10;
+    }
+    .login-bg::before {
+      content: ''; position: absolute; inset: 0;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center 38%;
+      opacity: 0.9;
+    }
+    .login-bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10,10,12,0.55) 0%,
+        rgba(10,10,12,0.35) 30%,
+        rgba(10,10,12,0.75) 62%,
+        rgba(10,10,12,1) 100%
+      );
+    }
+    .login-top {
+      position: relative; z-index: 2;
+      padding: 3rem 1.5rem 0;
+    }
+    .login-wordmark {
+      font-size: 11px; font-weight: 700; letter-spacing: 4px;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .login-car-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.08); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px; padding: 5px 12px;
+      font-size: 11px; color: rgba(255,255,255,0.6);
+      margin-top: 8px;
+    }
+    .login-car-badge span { color: #fff; font-weight: 600; }
+    .login-bottom {
+      position: relative; z-index: 2;
+      margin-top: auto;
+      padding: 0 1.25rem 2.5rem;
+      padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
+    }
+    .login-title {
+      font-size: 34px; font-weight: 700; line-height: 1.1;
+      color: #fff; margin-bottom: 6px;
+    }
+    .login-title em { color: var(--accent); font-style: normal; }
+    .login-sub { font-size: 14px; color: rgba(255,255,255,0.45); margin-bottom: 1.5rem; }
+    .login-field {
+      width: 100%; padding: 16px 18px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.07); backdrop-filter: blur(12px);
+      color: #fff; font-size: 18px; text-align: center;
+      letter-spacing: 6px; outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    .login-field::placeholder { letter-spacing: 2px; color: rgba(255,255,255,0.25); font-size: 14px; }
+    .login-field:focus { border-color: var(--accent); }
+    .login-error { font-size: 13px; color: #ff7070; min-height: 20px; margin-bottom: 8px; text-align: center; }
+    .login-btn {
+      width: 100%; padding: 16px;
+      border-radius: var(--radius);
+      background: var(--accent); color: var(--accent-text);
+      font-size: 16px; font-weight: 700; letter-spacing: 0.5px;
+      border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .login-btn:active { opacity: 0.85; transform: scale(0.98); }
+    .login-credit { font-size: 10px; color: rgba(255,255,255,0.15); margin-top: 14px; text-align: center; }
+
+    /* ── APP ── */
+    .app-screen { display: none; }
+    .header {
+      background: var(--bg-card); border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      padding-top: max(14px, env(safe-area-inset-top));
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
+    .header p { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+    .logout-btn {
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      background: none; border: 1px solid var(--border-hover);
+      padding: 8px 14px; height: 36px;
+      border-radius: 20px; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap;
+    }
+
+    /* Tabs — icon only, alle 5 in beeld */
+    .tabs {
+      display: flex; background: var(--bg-card); border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      flex: 1; padding: 12px 4px; font-size: 13px;
+      border: none; background: none; cursor: pointer;
+      color: var(--text-secondary); border-bottom: 2px solid transparent;
+      transition: color 0.15s;
+      min-height: var(--tap-target);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tab svg { width: 22px; height: 22px; stroke: currentColor; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:active { opacity: 0.6; }
+
+    .content { max-width: 540px; margin: 0 auto; padding: 0.875rem; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.125rem; margin-bottom: 12px; }
+    .card-title { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 14px; }
+
+    label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 6px; font-weight: 500; }
+    input, select {
+      width: 100%; padding: 13px 14px;
+      border: 1px solid var(--border-hover); border-radius: var(--radius);
+      background: var(--bg-card2); color: var(--text);
+      font-size: 16px; outline: none; transition: border-color 0.15s;
+      font-family: 'Inter', sans-serif;
+      min-height: var(--tap-target);
+      -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2380808a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    select option { background: var(--bg-card2); }
+    .form-group { margin-bottom: 14px; }
+    .row { display: flex; gap: 10px; }
+    .row > .form-group { flex: 1; }
+
+    .btn {
+      padding: 14px 18px; border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--border-hover);
+      background: var(--bg-card2); color: var(--text);
+      transition: opacity 0.15s; font-family: 'Inter', sans-serif;
+      min-height: var(--tap-target); display: flex; align-items: center; justify-content: center;
+    }
+    .btn:active { opacity: 0.7; }
+    .btn-primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent-dark); }
+    .btn-danger { color: var(--red); border-color: rgba(226,75,74,0.25); background: rgba(226,75,74,0.07); }
+    .btn-full { width: 100%; }
+
+    .avatar { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+    .avatar-lg { width: 42px; height: 42px; font-size: 15px; }
+    .avatar-sm { width: 30px; height: 30px; font-size: 12px; }
+
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .metric { background: var(--bg-card2); border-radius: var(--radius); padding: 14px 8px; text-align: center; }
+    .metric-val { font-size: 20px; font-weight: 700; }
+    .metric-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+
+    .rit-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .rit-row:last-child { border-bottom: none; }
+    .cost-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .cost-row:last-child { border-bottom: none; }
+    .driver-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; min-height: var(--tap-target); }
+    .settle-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .settle-row:last-child { border-bottom: none; }
+    .arrow { color: var(--text-secondary); margin: 0 5px; }
+
+    .tank-bar-wrap { height: 10px; background: var(--bg-card2); border-radius: 5px; overflow: hidden; margin-bottom: 6px; }
+    .tank-bar { height: 100%; border-radius: 5px; transition: width 0.5s; }
+    .progress-bar { height: 4px; background: var(--bg-card2); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; border-radius: 4px; }
+
+    .empty { text-align: center; padding: 2.5rem 0; color: var(--text-secondary); font-size: 14px; }
+    .loading { text-align: center; padding: 2.5rem 0; color: var(--text-secondary); font-size: 14px; }
+    .feedback { margin-top: 10px; font-size: 13px; min-height: 20px; line-height: 1.4; }
+    .sync-bar { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .period-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .period-tab { padding: 10px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-hover); background: var(--bg-card2); color: var(--text-secondary); min-height: 42px; display: flex; align-items: center; }
+    .period-tab.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent-dark); }
+    select.small { width: auto; padding: 8px 32px 8px 12px; font-size: 13px; min-height: 38px; }
+
+    /* Hero kaart */
+    .hero-card {
+      background: linear-gradient(135deg, #16161a 0%, #0d2218 100%);
+      border: 1px solid rgba(232,255,0,0.12);
+      border-radius: var(--radius-lg); padding: 1.25rem;
+      margin-bottom: 12px; position: relative; overflow: hidden;
+    }
+    .hero-card::before {
+      content: ''; position: absolute; top: -50px; right: -50px;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(232,255,0,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; }
+    .hero-km { font-size: 44px; font-weight: 700; color: var(--accent); line-height: 1; letter-spacing: -1px; }
+    .hero-sub { font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5; }
+    .hero-sub strong { color: var(--green-text); }
+
+    /* Vernieuwen knop iets meer ruimte */
+    .refresh-btn { margin-top: 8px; }
+    #edit-modal { display: none; }
+    #edit-modal.open { display: flex !important; }
+    .driver-select-btn:active { opacity: 0.7; transform: scale(0.98); }
+  </style>
+</head>
+<body>
+<style>
+  .login-bg::before { background-image: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAeAB4AAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAFBAlEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD9U6KKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKTOaAFooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAa3Soo5kklZVdSyHDAH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'); }
+</style>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-top">
+    <div class="login-wordmark">Autobeheer</div>
+    <div class="login-car-badge">🚗 <span>VW Polo TSI 2024</span></div>
+  </div>
+  <div class="login-bottom">
+    <h1 class="login-title">Rij slim.<br><em>Reken eerlijk.</em></h1>
+
+    <!-- Stap 1: wachtwoord -->
+    <div id="login-step1">
+      <p class="login-sub">Voer het wachtwoord in om verder te gaan</p>
+      <input type="password" class="login-field" id="login-input" placeholder="wachtwoord" onkeydown="if(event.key==='Enter') doLoginStep1()">
+      <div class="login-error" id="login-error"></div>
+      <button class="login-btn" onclick="doLoginStep1()">Verder</button>
+    </div>
+
+    <!-- Stap 2: wie ben jij? -->
+    <div id="login-step2" style="display:none">
+      <p class="login-sub">Wie ben jij?</p>
+      <div id="driver-buttons" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;"></div>
+      <div class="login-error" id="login-error2"></div>
+    </div>
+
+    <div class="login-credit">Foto: Unsplash</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-screen" id="app-screen">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-dot"></div>
+      <div>
+        <h1>Autobeheer</h1>
+        <p id="header-user">VW Polo TSI 2024</p>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Uitloggen</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard')" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    </button>
+    <button class="tab" onclick="showTab('rit')" title="Rit toevoegen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    </button>
+    <button class="tab" onclick="showTab('tanken')" title="Tanken">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14"/><path d="M14 10h2a2 2 0 0 1 2 2v3a1 1 0 0 0 1 1h0a1 1 0 0 0 1-1V9l-3-3"/><line x1="3" y1="22" x2="14" y2="22"/><line x1="6" y1="6" x2="11" y2="6"/></svg>
+    </button>
+    <button class="tab" onclick="showTab('kosten')" title="Kosten">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6.5A7 7 0 1 0 18 17.5"/><line x1="3" y1="11" x2="14" y2="11"/><line x1="3" y1="13" x2="14" y2="13"/></svg>
+    </button>
+    <button class="tab" onclick="showTab('instellingen')" title="Instellingen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+  <!-- Edit tankbeurt modal (admin only) -->
+  <div id="edit-tank-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:1.25rem;width:100%;max-width:540px;padding-bottom:max(1.25rem,env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin:0">Tankbeurt bewerken</div>
+        <button onclick="closeEditTank()" style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;padding:4px">&#10005;</button>
+      </div>
+      <div class="form-group"><label>Wie heeft betaald?</label><select id="edit-tank-betaler"></select></div>
+      <div class="form-group"><label>Prijs per liter (€)</label><input type="number" id="edit-tank-prijs" step="0.001" placeholder="1.899"></div>
+      <div class="form-group"><label>Aantal liters</label><input type="number" id="edit-tank-liters" step="0.01" placeholder="40"></div>
+      <div class="form-group"><label>Km-stand</label><input type="number" id="edit-tank-km" placeholder="45500"></div>
+      <div class="form-group"><label>Datum</label><input type="date" id="edit-tank-datum"></div>
+      <div class="feedback" id="edit-tank-feedback"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="saveEditTank()">Opslaan</button>
+    </div>
+  </div>
+
+  <!-- Edit rit modal -->
+  <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:1.25rem;width:100%;max-width:540px;padding-bottom:max(1.25rem,env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin:0">Rit bewerken</div>
+        <button onclick="closeEditRit()" style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;padding:4px">&#10005;</button>
+      </div>
+      <div class="form-group"><label>Begin km-stand</label><input type="number" id="edit-start" placeholder="45230"></div>
+      <div class="form-group"><label>Eind km-stand</label><input type="number" id="edit-end" placeholder="45280"></div>
+      <div class="form-group"><label>Datum</label><input type="date" id="edit-datum"></div>
+      <div class="form-group"><label>Omschrijving</label><input type="text" id="edit-desc" placeholder="werk, boodschappen..."></div>
+      <div class="feedback" id="edit-feedback"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="saveEditRit()">Opslaan</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div id="tab-dashboard" class="section active">
+      <div id="dash-content"><div class="loading">Gegevens laden...</div></div>
+    </div>
+
+    <div id="tab-rit" class="section">
+      <div class="card">
+        <div class="card-title">Nieuwe rit</div>
+        <div class="form-group"><label>Bestuurder</label><select id="rit-driver"></select></div>
+        <div class="row">
+          <div class="form-group"><label>Begin km-stand</label><input type="number" id="rit-start" placeholder="45230"></div>
+          <div class="form-group"><label>Eind km-stand</label><input type="number" id="rit-end" placeholder="45280"></div>
+        </div>
+        <div class="form-group"><label>Datum</label><input type="date" id="rit-datum"></div>
+        <div class="form-group"><label>Omschrijving (optioneel)</label><input type="text" id="rit-desc" placeholder="werk, boodschappen..."></div>
+        <button class="btn btn-primary btn-full" onclick="addRit()">Rit opslaan</button>
+        <div class="feedback" id="rit-feedback"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Recente ritten</div>
+        <div id="rit-list"><div class="loading">Laden...</div></div>
+      </div>
+    </div>
+
+    <div id="tab-tanken" class="section">
+      <div class="card">
+        <div class="card-title">Tankbeurt registreren</div>
+        <div class="form-group"><label>Wie heeft betaald?</label><select id="tank-betaler"></select></div>
+        <div class="form-group"><label>Prijs per liter (€)</label><input type="number" id="tank-prijs" step="0.001" placeholder="1.899"></div>
+        <div class="form-group"><label>Aantal liters getankt</label><input type="number" id="tank-liters" step="0.01" placeholder="40"></div>
+        <div class="form-group"><label>Huidige km-stand</label><input type="number" id="tank-km" placeholder="45500"></div>
+        <button class="btn btn-primary btn-full" onclick="berekenTanken()">Bereken verdeling</button>
+      </div>
+      <div id="tank-result"></div>
+      <div class="card">
+        <div class="card-title">Eerdere tankbeurten</div>
+        <div id="tank-history"><div class="loading">Laden...</div></div>
+      </div>
+    </div>
+
+    <div id="tab-kosten" class="section">
+      <div id="kosten-content"><div class="loading">Laden...</div></div>
+    </div>
+
+    <div id="tab-instellingen" class="section">
+      <div class="card">
+        <div class="card-title">Bestuurders</div>
+        <div id="driver-list"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <input type="text" id="new-driver-name" placeholder="Naam toevoegen" style="flex:1">
+          <button class="btn btn-primary" onclick="addDriver()">&#128274; Toevoegen</button>
+        </div>
+        <div class="feedback" id="driver-feedback"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Beheerder</div>
+        <div id="admin-status" style="font-size:13px;color:var(--text-secondary);margin-bottom:12px"></div>
+        <button class="btn btn-full" id="admin-btn" onclick="toggleAdmin()">Inloggen als beheerder</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Beginstand km-teller</div>
+        <div class="form-group"><input type="number" id="start-km" placeholder="45000"></div>
+        <button class="btn btn-full" onclick="saveStartKm()">&#128274; Opslaan</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Verbruik</div>
+        <div id="verbruik-berekend" style="font-size:12px;color:var(--green-text);margin-bottom:12px;line-height:1.4;"></div>
+        <div class="form-group">
+          <label>Gemiddeld verbruik (km per liter)</label>
+          <input type="number" id="verbruik-input" step="0.1" placeholder="19.2">
+        </div>
+        <button class="btn btn-full" onclick="saveVerbruik()">&#128274; Handmatig opslaan</button>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;">Het verbruik wordt automatisch berekend op basis van de tankbeurten. Je kunt het ook handmatig aanpassen.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const PASSWORD='2651ta', SESSION_KEY='autobeheer_auth', ADMIN_PW='admin', ADMIN_KEY='autobeheer_admin';
+  const API='https://script.google.com/macros/s/AKfycbwpdw-Z66sOF1_MVaYYIxYYE_hfvfhaKfNuqY_QYEPe-SKoyExRxkvREHXPhDgTp9UQ/exec';
+  const VERBRUIK_KEY='autobeheer_verbruik';
+  const MAANDEN=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const COLORS=['#E8FF00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
+  const BG_C=['rgba(232,255,0,0.1)','rgba(78,207,158,0.1)','rgba(96,165,250,0.1)','rgba(249,115,22,0.1)','rgba(232,121,249,0.1)'];
+  const TEXT_C=['#c8dc00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
+
+  let state={drivers:['Anna','Bas','Chris'],ritten:[],tankbeurten:[],startKm:parseInt(localStorage.getItem('startKm')||'0'),loaded:false};
+  let kostenPeriod='maand';
+
+  function getVerbruik(){return parseFloat(localStorage.getItem(VERBRUIK_KEY)||'19.2');}
+  function getPrijsPerKm(){if(!state.tankbeurten.length)return null;return(+state.tankbeurten[state.tankbeurten.length-1].prijs)/getVerbruik();}
+  function ritKosten(km){const p=getPrijsPerKm();return p?p*km:null;}
+
+  function isAdmin(){return sessionStorage.getItem(ADMIN_KEY)==='ok';}
+  function requireAdmin(fn){
+    if(isAdmin()){fn();return;}
+    const pw=prompt('Beheerderswachtwoord:');
+    if(pw&&pw.toLowerCase()===ADMIN_PW){sessionStorage.setItem(ADMIN_KEY,'ok');fn();}
+    else if(pw!==null){alert('Onjuist wachtwoord.');}
+  }
+  let editingTankIdx=null;
+  function openEditTank(idx){
+    if(!isAdmin()){
+      const pw=prompt('Beheerderswachtwoord:');
+      if(pw&&pw.toLowerCase()===ADMIN_PW){sessionStorage.setItem(ADMIN_KEY,'ok');}
+      else{if(pw!==null)alert('Onjuist wachtwoord.');return;}
+    }
+    editingTankIdx=idx;
+    const t=state.tankbeurten[state.tankbeurten.length-1-idx];
+    const sel=document.getElementById('edit-tank-betaler');
+    sel.innerHTML=state.drivers.map(d=>`<option${t.betaler===d?' selected':''}>${d}</option>`).join('');
+    document.getElementById('edit-tank-prijs').value=(+t.prijs).toFixed(3);
+    document.getElementById('edit-tank-liters').value=(+t.liters).toFixed(2);
+    document.getElementById('edit-tank-km').value=t.km;
+    document.getElementById('edit-tank-datum').value=t.datum||'';
+    document.getElementById('edit-tank-feedback').textContent='';
+    document.getElementById('edit-tank-modal').style.display='flex';
+  }
+  function closeEditTank(){
+    document.getElementById('edit-tank-modal').style.display='none';
+    editingTankIdx=null;
+  }
+  async function saveEditTank(){
+    const fb=document.getElementById('edit-tank-feedback');
+    const betaler=document.getElementById('edit-tank-betaler').value;
+    const prijs=parseFloat(document.getElementById('edit-tank-prijs').value);
+    const liters=parseFloat(document.getElementById('edit-tank-liters').value);
+    const km=parseInt(document.getElementById('edit-tank-km').value);
+    const datum=document.getElementById('edit-tank-datum').value;
+    if(isNaN(prijs)||isNaN(liters)||isNaN(km)){fb.style.color='#ff7070';fb.textContent='Vul alle velden in.';return;}
+    const totaal=parseFloat((prijs*liters).toFixed(4));
+    fb.style.color='var(--text-secondary)';fb.textContent='Opslaan...';
+    const realIdx=state.tankbeurten.length-1-editingTankIdx;
+    const updated={betaler,prijs,liters,km,totaal,datum};
+    state.tankbeurten[realIdx]=updated;
+    try{
+      await apiPost({action:'updateTankbeurt',index:realIdx,tankbeurt:updated});
+      fb.style.color='var(--green-text)';fb.textContent='✓ Opgeslagen';
+      setTimeout(()=>{closeEditTank();renderTankHistory();},800);
+    }catch(e){
+      fb.style.color='var(--green-text)';fb.textContent='✓ Lokaal opgeslagen';
+      setTimeout(()=>{closeEditTank();renderTankHistory();},800);
+    }
+  }
+  let editingRitIdx=null;
+  function openEditRit(idx){
+    editingRitIdx=idx;
+    const r=state.ritten[idx];
+    document.getElementById('edit-start').value=r.startKm;
+    document.getElementById('edit-end').value=r.eindKm;
+    document.getElementById('edit-datum').value=r.datum||'';
+    document.getElementById('edit-desc').value=r.desc||'';
+    document.getElementById('edit-feedback').textContent='';
+    document.getElementById('edit-modal').style.display='flex';
+  }
+  function closeEditRit(){
+    document.getElementById('edit-modal').style.display='none';
+    editingRitIdx=null;
+  }
+  async function saveEditRit(){
+    const fb=document.getElementById('edit-feedback');
+    const start=parseInt(document.getElementById('edit-start').value);
+    const end=parseInt(document.getElementById('edit-end').value);
+    const datum=document.getElementById('edit-datum').value;
+    const desc=document.getElementById('edit-desc').value;
+    if(isNaN(start)||isNaN(end)||end<=start){fb.style.color='#ff7070';fb.textContent='Eind km moet groter zijn dan begin km.';return;}
+    fb.style.color='var(--text-secondary)';fb.textContent='Opslaan...';
+    const km=end-start;
+    const updatedRit={...state.ritten[editingRitIdx],startKm:start,eindKm:end,km,datum,desc};
+    // Update in Google Sheets via a full re-save of all ritten
+    state.ritten[editingRitIdx]=updatedRit;
+    try{
+      await apiPost({action:'updateRit',index:editingRitIdx,rit:updatedRit});
+      fb.style.color='var(--green-text)';fb.textContent='✓ Opgeslagen';
+      setTimeout(()=>{closeEditRit();renderRitList();},800);
+    }catch(e){
+      // Update locally even if sheets fails
+      fb.style.color='var(--green-text)';fb.textContent='✓ Lokaal opgeslagen';
+      setTimeout(()=>{closeEditRit();renderRitList();},800);
+    }
+  }
+  function toggleAdmin(){
+    if(isAdmin()){
+      sessionStorage.removeItem(ADMIN_KEY);
+      renderSettings();
+    } else {
+      const pw=prompt('Beheerderswachtwoord:');
+      if(pw&&pw.toLowerCase()===ADMIN_PW){
+        sessionStorage.setItem(ADMIN_KEY,'ok');
+        renderSettings();
+        renderTankHistory();
+      } else if(pw!==null){alert('Onjuist wachtwoord.');}
+    }
+  }
+  function checkSession(){
+    if(sessionStorage.getItem(SESSION_KEY)==='ok'){
+      // Load drivers first then show step 2 or go straight to app if user already chosen
+      const savedUser=sessionStorage.getItem('currentUser');
+      if(savedUser){showApp();}
+      else{
+        loadAll().then(()=>{
+          document.getElementById('login-screen').style.display='flex';
+          showDriverButtons();
+          document.getElementById('login-step1').style.display='none';
+          document.getElementById('login-step2').style.display='block';
+        });
+      }
+    }
+  }
+  function getCurrentUser(){return sessionStorage.getItem('currentUser');}
+  function doLoginStep1(){
+    const val=document.getElementById('login-input').value.trim().toLowerCase();
+    if(val===PASSWORD){
+      sessionStorage.setItem(SESSION_KEY,'ok');
+      document.getElementById('login-error').textContent='';
+      // Load drivers for step 2
+      loadAll().then(()=>{
+        document.getElementById('login-step1').style.display='none';
+        document.getElementById('login-step2').style.display='block';
+        showDriverButtons();
+      });
+    } else {
+      document.getElementById('login-error').textContent='Onjuist wachtwoord, probeer opnieuw.';
+      document.getElementById('login-input').value='';
+      document.getElementById('login-input').focus();
+    }
+  }
+  function showDriverButtons(){
+    const wrap=document.getElementById('driver-buttons');
+    wrap.innerHTML=state.drivers.map(d=>`
+      <button onclick="selectDriver('${d}')" style="width:100%;padding:14px;border-radius:var(--radius);background:var(--bg-card2);border:1px solid var(--border-hover);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:12px;">
+        <div style="width:38px;height:38px;border-radius:50%;background:${BG_C[driverIndex(d)%5]};color:${TEXT_C[driverIndex(d)%5]};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials(d)}</div>
+        ${d}
+      </button>`).join('');
+  }
+  function selectDriver(name){
+    sessionStorage.setItem('currentUser', name);
+    showApp();
+  }
+  function doLogin(){
+    const val=document.getElementById('login-input').value.trim().toLowerCase();
+    if(val===PASSWORD){sessionStorage.setItem(SESSION_KEY,'ok');document.getElementById('login-error').textContent='';showApp();}
+    else{document.getElementById('login-error').textContent='Onjuist wachtwoord, probeer opnieuw.';document.getElementById('login-input').value='';document.getElementById('login-input').focus();}
+  }
+  function showApp(){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    const user=getCurrentUser();
+    const headerUser=document.getElementById('header-user');
+    if(headerUser)headerUser.textContent=user?`Ingelogd als ${user}`:'VW Polo TSI 2024';
+    loadAll().then(()=>renderDashboard());
+  }
+  function doLogout(){
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('currentUser');
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app-screen').style.display='none';
+    document.getElementById('login-input').value='';
+    document.getElementById('login-step1').style.display='block';
+    document.getElementById('login-step2').style.display='none';
+  }
+
+  async function apiFetch(p){const r=await fetch(API+'?'+new URLSearchParams(p));return r.json();}
+  async function apiPost(b){await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)});}
+  async function loadAll(){
+    try{
+      const[ri,ta,dr]=await Promise.all([apiFetch({action:'getRitten'}),apiFetch({action:'getTankbeurten'}),apiFetch({action:'getDrivers'})]);
+      state.ritten=Array.isArray(ri)?ri:[];
+      state.tankbeurten=Array.isArray(ta)?ta:[];
+      state.drivers=Array.isArray(dr)?dr:['Anna','Bas','Chris'];
+      state.loaded=true;
+      state.loadError=false;
+    }catch(e){
+      console.error('Laad fout:',e);
+      state.loaded=true;
+      state.loadError=true;
+    }
+  }
+
+  function initials(n){return n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();}
+  function driverIndex(n){return state.drivers.indexOf(n);}
+  function todayStr(){return new Date().toISOString().split('T')[0];}
+  function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}-${m}-${y}`;}
+  function ci(name){const i=driverIndex(name);return i>=0?i%5:0;}
+
+  function showTab(t){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(s=>s.classList.remove('active'));
+    document.getElementById('tab-'+t).classList.add('active');
+    const map={dashboard:0,rit:1,tanken:2,kosten:3,instellingen:4};
+    if(map[t]!==undefined)document.querySelectorAll('.tab')[map[t]].classList.add('active');
+    if(t==='dashboard')renderDashboard();
+    if(t==='rit')renderRitTab();
+    if(t==='tanken')renderTankTab();
+    if(t==='kosten')renderKosten();
+    if(t==='instellingen')renderSettings();
+  }
+
+  function renderDashboard(){
+    const el=document.getElementById('dash-content');
+    if(!state.loaded){el.innerHTML='<div class="loading">Gegevens laden...</div>';return;}
+    const totaalKm=state.ritten.reduce((s,r)=>s+(+r.km),0);
+    const actueleKm=state.ritten.length>0?+state.ritten[state.ritten.length-1].eindKm:state.startKm;
+    const lastTankKm=state.tankbeurten.length>0?+state.tankbeurten[state.tankbeurten.length-1].km:state.startKm;
+    const sindsLaatstTank=Math.max(0,actueleKm-lastTankKm);
+    const tankPct=Math.max(0,Math.min(100,100-(sindsLaatstTank/600*100)));
+    const barColor=tankPct<20?'#E24B4A':tankPct<40?'#f97316':'#E8FF00';
+    const kmPerDriver={};
+    state.drivers.forEach(d=>{kmPerDriver[d]=0;});
+    state.ritten.forEach(r=>{if(kmPerDriver[r.driver]!==undefined)kmPerDriver[r.driver]+=(+r.km);});
+    const lastPrijs=state.tankbeurten.length?(+state.tankbeurten[state.tankbeurten.length-1].prijs).toFixed(3):null;
+    const vandaag=todayStr();
+    const rittenVandaag=state.ritten.filter(r=>r.datum===vandaag);
+    const kmVandaag=rittenVandaag.reduce((s,r)=>s+(+r.km),0);
+    const aantalVandaag=rittenVandaag.length;
+    const ppk=getPrijsPerKm();
+    const kmVandaagPerDriver={};
+    state.drivers.forEach(d=>{kmVandaagPerDriver[d]=0;});
+    rittenVandaag.forEach(r=>{if(kmVandaagPerDriver[r.driver]!==undefined)kmVandaagPerDriver[r.driver]+=(+r.km);});
+    const dStats=state.drivers.map((d,i)=>{
+      const km=kmPerDriver[d]||0,pct=totaalKm>0?Math.round(km/totaalKm*100):0,idx=i%5;
+      const kosten=ritKosten(km);
+      const kmHvandaag=kmVandaagPerDriver[d]||0;
+      return`<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div class="avatar avatar-lg" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${initials(d)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700">${d}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
+            <span style="color:var(--text);font-weight:600">${km} km totaal</span>
+            ${kmHvandaag>0?`&middot; <span style="color:var(--accent);font-weight:600">${kmHvandaag} km vandaag</span>`:''}
+            ${kosten!==null?` &middot; <span style="color:var(--green-text);font-weight:600">&#8364; ${kosten.toFixed(2)}</span>`:''}
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${COLORS[idx]}"></div></div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);min-width:32px;text-align:right">${pct}%</div>
+      </div>`;
+    }).join('');
+    el.innerHTML=`
+      <div class="sync-bar"><div class="sync-dot" style="${state.loadError?'background:#ff7070':''}"></div>${state.loadError?'Verbindingsfout &mdash; controleer je internet en vernieuw':'Gesynchroniseerd met Google Sheets'}</div>
+      <div class="hero-card">
+        <div class="hero-lbl">Actuele kilometerstand</div>
+        <div class="hero-km">${actueleKm.toLocaleString('nl-NL')}</div>
+        <div style="margin-top:10px;display:flex;gap:20px">
+          <div><div style="font-size:22px;font-weight:700;color:var(--text)">${kmVandaag}</div><div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-secondary);margin-top:2px">km vandaag</div></div>
+          <div><div style="font-size:22px;font-weight:700;color:var(--text)">${aantalVandaag}</div><div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-secondary);margin-top:2px">ritten vandaag</div></div>
+          ${lastPrijs?`<div><div style="font-size:22px;font-weight:700;color:var(--green-text)">&#8364; ${lastPrijs}</div><div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-secondary);margin-top:2px">prijs/ltr</div></div>`:''}
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-title" style="margin:0">Tankniveau (schatting)</div>
+          <span style="font-size:14px;font-weight:700;color:${barColor}">${Math.round(tankPct)}%</span>
+        </div>
+        <div class="tank-bar-wrap"><div class="tank-bar" style="width:${tankPct}%;background:${barColor}"></div></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">${sindsLaatstTank} km gereden sinds laatste tankbeurt</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px">Per bestuurder</div>
+      ${dStats}
+      <button class="btn btn-full refresh-btn" onclick="refreshAll()">&#8635; Vernieuwen</button>`;
+  }
+
+  async function refreshAll(){document.getElementById('dash-content').innerHTML='<div class="loading">Gegevens laden...</div>';await loadAll();renderDashboard();}
+
+  function renderRitTab(){
+    const sel=document.getElementById('rit-driver');
+    sel.innerHTML=state.drivers.map(d=>`<option>${d}</option>`).join('');
+    const lastKm=state.ritten.length>0?state.ritten[state.ritten.length-1].eindKm:state.startKm||'';
+    document.getElementById('rit-start').value=lastKm||'';
+    document.getElementById('rit-datum').value=todayStr();
+    renderRitList();
+  }
+
+  function renderRitList(){
+    const list=document.getElementById('rit-list');
+    const recent=[...state.ritten].reverse().slice(0,15);
+    if(!recent.length){list.innerHTML='<div class="empty">Nog geen ritten geregistreerd</div>';return;}
+    const ppk=getPrijsPerKm(),verbruik=getVerbruik();
+    list.innerHTML=recent.map(r=>{
+      const idx=ci(r.driver),km=+r.km;
+      const kosten=ppk?ppk*km:null,liters=km/verbruik;
+      const ritIdx=state.ritten.length-1-recent.indexOf(r);
+      const kanBewerken=getCurrentUser()&&(getCurrentUser()===r.driver||isAdmin());
+      return`<div class="rit-row">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+            <span class="badge" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${r.driver}</span>
+            ${r.desc?`<span style="color:var(--text-secondary);font-size:13px">${r.desc}</span>`:''}
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary)">${formatDate(r.datum)} &middot; ${r.startKm} &#8594; ${r.eindKm} km</div>
+          ${kosten!==null?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${liters.toFixed(1)} liter &middot; brandstof: <span style="color:var(--green-text);font-weight:600">&#8364; ${kosten.toFixed(2)}</span></div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="font-weight:700;font-size:15px">${km} km</div>
+          ${kosten!==null?`<div style="font-size:13px;font-weight:700;color:var(--green-text)">&#8364; ${kosten.toFixed(2)}</div>`:''}
+          ${kanBewerken?`<button onclick="openEditRit(${ritIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--border-hover);background:var(--bg-card2);color:var(--text-secondary);cursor:pointer;min-height:0">&#9998; Bewerk</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    if(ppk&&state.tankbeurten.length){
+      const last=state.tankbeurten[state.tankbeurten.length-1];
+      const info=document.createElement('div');
+      info.style.cssText='font-size:12px;color:var(--text-secondary);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)';
+      info.textContent=`Kosten gebaseerd op laatste tankbeurt: € ${(+last.prijs).toFixed(3)}/ltr · verbruik 1 op ${verbruik} km`;
+      list.appendChild(info);
+    }
+  }
+
+  async function addRit(){
+    const driver=document.getElementById('rit-driver').value;
+    const start=parseInt(document.getElementById('rit-start').value);
+    const end=parseInt(document.getElementById('rit-end').value);
+    const datum=document.getElementById('rit-datum').value;
+    const desc=document.getElementById('rit-desc').value;
+    const fb=document.getElementById('rit-feedback');
+    if(!driver||isNaN(start)||isNaN(end)||end<=start){fb.style.color='#ff7070';fb.textContent='Vul geldige km-standen in (eind > begin).';return;}
+    fb.style.color='var(--text-secondary)';fb.textContent='Opslaan...';
+    const km=end-start,rit={driver,startKm:start,eindKm:end,km,desc,datum};
+    try{
+      await apiPost({action:'addRit',...rit});
+      state.ritten.push(rit);
+      const kosten=ritKosten(km);
+      fb.style.color='var(--green-text)';
+      fb.textContent=`✓ ${km} km opgeslagen voor ${driver}${kosten!==null?' · €'+kosten.toFixed(2)+' brandstofkosten':''}`;
+      document.getElementById('rit-end').value='';
+      document.getElementById('rit-desc').value='';
+      document.getElementById('rit-start').value=end;
+      document.getElementById('rit-datum').value=todayStr();
+      renderRitList();
+    }catch(e){fb.style.color='#ff7070';fb.textContent='Fout bij opslaan.';}
+  }
+
+  function renderTankTab(){
+    const sel=document.getElementById('tank-betaler');
+    sel.innerHTML=state.drivers.map(d=>`<option>${d}</option>`).join('');
+    renderTankHistory();
+  }
+
+  function berekenTanken(){
+    const betaler=document.getElementById('tank-betaler').value;
+    const prijs=parseFloat(document.getElementById('tank-prijs').value);
+    const liters=parseFloat(document.getElementById('tank-liters').value);
+    const km=parseInt(document.getElementById('tank-km').value);
+    if(isNaN(prijs)||isNaN(liters)||isNaN(km)){document.getElementById('tank-result').innerHTML='<div class="card"><span style="color:#ff7070;font-size:14px">Vul alle velden in.</span></div>';return;}
+    const totaalKosten=prijs*liters;
+    const lastTankKm=state.tankbeurten.length>0?+state.tankbeurten[state.tankbeurten.length-1].km:state.startKm;
+    const rittenSindsTank=state.ritten.filter(r=>+r.eindKm>lastTankKm);
+    const totaalKmSindsTank=rittenSindsTank.reduce((s,r)=>s+(+r.km),0);
+
+    // Geen ritten sinds laatste tankbeurt: gewoon opslaan zonder verdeling
+    if(totaalKmSindsTank===0){
+      const tv=totaalKosten.toFixed(4);
+      document.getElementById('tank-result').innerHTML=`
+        <div class="card">
+          <div class="card-title">Starttankbeurt</div>
+          <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px">Er zijn nog geen ritten gereden sinds de vorige tankbeurt. Deze tankbeurt wordt opgeslagen als startpunt — de verdeling begint pas bij de volgende tankbeurt.</div>
+          <div style="font-size:15px;font-weight:700">&#8364; ${totaalKosten.toFixed(2)} &middot; ${liters} liter @ &#8364; ${prijs.toFixed(3)}/ltr</div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-bottom:12px" onclick="saveTankbeurt('${betaler}',${prijs},${liters},${km},${tv})">Opslaan als starttankbeurt</button>`;
+      return;
+    }
+
+    const kmPerDriver={};state.drivers.forEach(d=>{kmPerDriver[d]=0;});
+    for(const r of rittenSindsTank){if(kmPerDriver[r.driver]!==undefined)kmPerDriver[r.driver]+=(+r.km);}
+    const totaalKm=Object.values(kmPerDriver).reduce((a,b)=>a+b,0);
+    const verdeling=state.drivers.map((d,i)=>{
+      const dkm=kmPerDriver[d]||0,pct=totaalKm>0?dkm/totaalKm:1/state.drivers.length;
+      return{driver:d,km:dkm,pct,kosten:totaalKosten*pct,i:i%5};
+    });
+    const settlements=verdeling.filter(v=>v.driver!==betaler).map(v=>({van:v.driver,aan:betaler,bedrag:v.kosten,i:v.i}));
+    const rows=verdeling.map(v=>`<div class="cost-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="avatar avatar-sm" style="background:${BG_C[v.i]};color:${TEXT_C[v.i]}">${initials(v.driver)}</div>
+        <span style="font-size:15px">${v.driver}${v.driver===betaler?' <span style="font-size:11px;color:var(--text-secondary)">(betaler)</span>':''}</span>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;font-size:15px">&#8364; ${v.kosten.toFixed(2)}</div>
+        <div style="font-size:12px;color:var(--text-secondary)">${v.km} km (${Math.round(v.pct*100)}%)</div>
+      </div>
+    </div>`).join('');
+    const settleRows=settlements.map(s=>`<div class="settle-row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar avatar-sm" style="background:${BG_C[ci(s.van)]};color:${TEXT_C[ci(s.van)]}">${initials(s.van)}</div>
+        <span>${s.van}</span><span class="arrow">&#8594;</span>
+        <div class="avatar avatar-sm" style="background:${BG_C[ci(s.aan)]};color:${TEXT_C[ci(s.aan)]}">${initials(s.aan)}</div>
+        <span>${s.aan}</span>
+      </div>
+      <div style="font-weight:700;color:var(--green-text);font-size:15px">&#8364; ${s.bedrag.toFixed(2)}</div>
+    </div>`).join('');
+    const tv=totaalKosten.toFixed(4);
+    document.getElementById('tank-result').innerHTML=`
+      <div class="card"><div class="card-title">Verdeling &mdash; &#8364; ${totaalKosten.toFixed(2)} totaal</div>${rows}</div>
+      <div class="card"><div class="card-title">Verrekening</div>${settleRows||'<div class="empty" style="padding:0.5rem 0;font-size:14px">Geen verrekening nodig</div>'}</div>
+      <button class="btn btn-primary btn-full" style="margin-bottom:12px" onclick="saveTankbeurt('${betaler}',${prijs},${liters},${km},${tv})">Opslaan als tankbeurt</button>`;
+  }
+
+  async function saveTankbeurt(betaler,prijs,liters,km,totaal){
+    const datum=todayStr();
+    const tb={
+      betaler:String(betaler),
+      prijs:parseFloat(String(prijs).replace(',','.')),
+      liters:parseFloat(String(liters).replace(',','.')),
+      km:parseInt(String(km).replace(',','')),
+      totaal:parseFloat(String(totaal).replace(',','.')),
+      datum
+    };
+    try{
+      await apiPost({action:'addTankbeurt',...tb});
+      state.tankbeurten.push(tb);
+      document.getElementById('tank-result').innerHTML='<div class="card"><span style="color:var(--green-text);font-size:14px">✓ Tankbeurt opgeslagen in Google Sheets</span></div>';
+      renderTankHistory();
+    }catch(e){document.getElementById('tank-result').innerHTML='<div class="card"><span style="color:#ff7070;font-size:14px">Fout bij opslaan.</span></div>';}
+  }
+
+  function renderTankHistory(){
+    const el=document.getElementById('tank-history');
+    if(!state.tankbeurten.length){el.innerHTML='<div class="empty">Nog geen tankbeurten geregistreerd</div>';return;}
+    el.innerHTML=[...state.tankbeurten].reverse().map((t,tankIdx)=>{
+      const idx=t.betaler?ci(t.betaler):0;
+      const ti=state.tankbeurten.length-1-tankIdx;
+      return`<div class="rit-row">
+        <div style="flex:1;min-width:0">
+          <span style="font-size:14px;font-weight:700">${(+t.liters).toFixed(2)} liter @ &#8364; ${(+t.prijs).toFixed(3)}</span>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:3px">${formatDate(t.datum)} &middot; stand ${t.km} km${t.betaler?` &middot; <span class="badge" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${t.betaler}</span> betaald`:''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="font-weight:700;font-size:15px">&#8364; ${(+t.totaal).toFixed(2)}</div>
+          <button onclick="openEditTank(${tankIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--border-hover);background:var(--bg-card2);color:var(--text-secondary);cursor:pointer;min-height:0">&#9998; Bewerk</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderKosten(){
+    const el=document.getElementById('kosten-content');
+    if(!state.loaded){el.innerHTML='<div class="loading">Laden...</div>';return;}
+    const alleJaren=[...state.ritten,...state.tankbeurten].map(x=>x.datum?x.datum.split('-')[0]:'').filter(Boolean);
+    const jaren=[...new Set(alleJaren)].sort().reverse();
+    if(!jaren.length)jaren.push(String(new Date().getFullYear()));
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="period-tabs">
+          <button class="period-tab ${kostenPeriod==='maand'?'active':''}" onclick="setKostenPeriod('maand')">Maandelijks</button>
+          <button class="period-tab ${kostenPeriod==='jaar'?'active':''}" onclick="setKostenPeriod('jaar')">Jaarlijks</button>
+        </div>
+        ${kostenPeriod==='maand'?`<select class="small" id="kosten-jaar" onchange="renderKostenBody()">${jaren.map(j=>`<option value="${j}">${j}</option>`).join('')}</select>`:''}
+      </div>
+      <div id="kosten-body"></div>`;
+    renderKostenBody();
+  }
+  function setKostenPeriod(p){kostenPeriod=p;renderKosten();}
+
+  function renderKostenBody(){
+    const el=document.getElementById('kosten-body');if(!el)return;
+    const verbruik=getVerbruik();
+    if(kostenPeriod==='maand'){
+      const jaarEl=document.getElementById('kosten-jaar');
+      const jaar=jaarEl?jaarEl.value:String(new Date().getFullYear());
+      const kmM={},kostenM={};
+      state.drivers.forEach(d=>{kmM[d]={};kostenM[d]={};for(let m=0;m<12;m++){kmM[d][m]=0;kostenM[d][m]=0;}});
+      state.ritten.forEach(r=>{
+        if(!r.datum)return;const[y,m]=r.datum.split('-');if(y!==jaar||!kmM[r.driver])return;
+        const mi=parseInt(m)-1;kmM[r.driver][mi]+=(+r.km);
+        const gt=state.tankbeurten.filter(t=>t.datum&&t.datum<=r.datum).pop();
+        if(gt)kostenM[r.driver][mi]+=(+gt.prijs)/verbruik*(+r.km);
+      });
+      const actief=[];for(let m=0;m<12;m++){if(state.drivers.some(d=>kmM[d][m]>0))actief.push(m);}
+      if(!actief.length){el.innerHTML=`<div class="empty">Geen data voor ${jaar}</div>`;return;}
+      let html='';
+      [...actief].reverse().forEach(m=>{
+        const mt=state.drivers.reduce((s,d)=>s+kostenM[d][m],0);
+        const totKmMaand=state.drivers.reduce((s,d)=>s+Math.round(kmM[d][m]),0);
+        html+=`<div class="card"><div class="card-title">${MAANDEN[m]} ${jaar} &middot; ${totKmMaand} km &middot; &#8364; ${mt.toFixed(2)}</div>`;
+        state.drivers.forEach((d,i)=>{
+          const idx=i%5,km=Math.round(kmM[d][m]),kosten=kostenM[d][m];
+          if(km===0&&kosten===0)return;
+          html+=`<div class="cost-row">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar avatar-sm" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${initials(d)}</div>
+              <div>
+                <div style="font-weight:600;font-size:15px">${d}</div>
+                <div style="font-size:12px;color:var(--text-secondary)">${km} km &middot; ${(km/verbruik).toFixed(1)} liter</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:700;font-size:15px;color:var(--green-text)">&#8364; ${kosten.toFixed(2)}</div>
+              <div style="font-size:11px;color:var(--text-secondary)">${km} km</div>
+            </div>
+          </div>`;
+        });html+=`</div>`;
+      });el.innerHTML=html;
+    }else{
+      const alleJaren2=[...state.ritten,...state.tankbeurten].map(x=>x.datum?x.datum.split('-')[0]:'').filter(Boolean);
+      const jaren2=[...new Set(alleJaren2)].sort().reverse();
+      if(!jaren2.length){el.innerHTML='<div class="empty">Nog geen data</div>';return;}
+      let html='';
+      jaren2.forEach(jaar=>{
+        const kmPD={},kostenPD={};state.drivers.forEach(d=>{kmPD[d]=0;kostenPD[d]=0;});
+        state.ritten.forEach(r=>{
+          if(!r.datum||r.datum.split('-')[0]!==jaar||!kmPD[r.driver])return;
+          kmPD[r.driver]+=(+r.km);
+          const gt=state.tankbeurten.filter(t=>t.datum&&t.datum<=r.datum).pop();
+          if(gt)kostenPD[r.driver]+=(+gt.prijs)/verbruik*(+r.km);
+        });
+        const totaal=Object.values(kostenPD).reduce((a,b)=>a+b,0);
+        const totKm=Object.values(kmPD).reduce((a,b)=>a+b,0);
+        html+=`<div class="card"><div class="card-title">${jaar} &middot; ${totKm.toLocaleString('nl-NL')} km totaal &middot; &#8364; ${totaal.toFixed(2)}</div>`;
+        state.drivers.forEach((d,i)=>{
+          const idx=i%5;if(!kmPD[d])return;
+          html+=`<div class="cost-row">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar avatar-sm" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${initials(d)}</div>
+              <div>
+                <div style="font-weight:600;font-size:15px">${d}</div>
+                <div style="font-size:12px;color:var(--text-secondary)">${Math.round(kmPD[d]).toLocaleString('nl-NL')} km &middot; ${(kmPD[d]/verbruik).toFixed(1)} liter</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:700;font-size:15px;color:var(--green-text)">&#8364; ${kostenPD[d].toFixed(2)}</div>
+              <div style="font-size:11px;color:var(--text-secondary)">${Math.round(kmPD[d]).toLocaleString('nl-NL')} km</div>
+            </div>
+          </div>`;
+        });html+=`</div>`;
+      });
+      html+=renderVerrekening();el.innerHTML=html;
+    }
+  }
+
+  function renderVerrekening(){
+    const saldo={};state.drivers.forEach(d=>{saldo[d]=0;});
+    state.tankbeurten.forEach(t=>{
+      const totaal=+t.totaal,kmPD={};state.drivers.forEach(d=>{kmPD[d]=0;});
+      state.ritten.forEach(r=>{if(kmPD[r.driver]!==undefined)kmPD[r.driver]+=(+r.km);});
+      const totKm=Object.values(kmPD).reduce((a,b)=>a+b,0);
+      state.drivers.forEach(d=>{
+        const pct=totKm>0?(kmPD[d]||0)/totKm:1/state.drivers.length;
+        if(t.betaler&&saldo[t.betaler]!==undefined&&t.betaler!==d)saldo[t.betaler]+=(totaal*pct);
+        if(saldo[d]!==undefined&&t.betaler&&t.betaler!==d)saldo[d]-=(totaal*pct);
+      });
+    });
+    const schulden=[],tegoeden=[];
+    Object.entries(saldo).forEach(([d,s])=>{if(s>0.01)tegoeden.push({d,s});else if(s<-0.01)schulden.push({d,s:-s});});
+    if(!schulden.length&&!tegoeden.length)return'';
+    let rows='';
+    schulden.forEach(sch=>{tegoeden.forEach(teg=>{
+      if(sch.s>0.01&&teg.s>0.01){
+        const bedrag=Math.min(sch.s,teg.s);
+        rows+=`<div class="settle-row">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="avatar avatar-sm" style="background:${BG_C[ci(sch.d)]};color:${TEXT_C[ci(sch.d)]}">${initials(sch.d)}</div>
+            <span>${sch.d}</span><span class="arrow">&#8594;</span>
+            <div class="avatar avatar-sm" style="background:${BG_C[ci(teg.d)]};color:${TEXT_C[ci(teg.d)]}">${initials(teg.d)}</div>
+            <span>${teg.d}</span>
+          </div>
+          <div style="font-weight:700;color:var(--green-text);font-size:15px">&#8364; ${bedrag.toFixed(2)}</div>
+        </div>`;
+      }
+    });});
+    return rows?`<div class="card"><div class="card-title">Openstaande verrekening</div>${rows}</div>`:'';
+  }
+
+  function berekenGemVerbruik(){
+    // Minstens 2 tankbeurten nodig om verbruik te berekenen
+    if(state.tankbeurten.length < 2) return null;
+    // Sorteer tankbeurten op km-stand
+    const sorted = [...state.tankbeurten].sort((a,b)=>(+a.km)-(+b.km));
+    // Totaal liters getankt (excl. eerste tankbeurt want die was de "starttank")
+    const totaalLiters = sorted.slice(1).reduce((s,t)=>s+(+t.liters), 0);
+    // Totaal km gereden tussen eerste en laatste tankbeurt
+    const totaalKm = (+sorted[sorted.length-1].km) - (+sorted[0].km);
+    if(totaalLiters <= 0 || totaalKm <= 0) return null;
+    return totaalKm / totaalLiters;
+  }
+
+  function renderSettings(){
+    const adminStatusEl=document.getElementById('admin-status');
+    const adminBtnEl=document.getElementById('admin-btn');
+    if(adminStatusEl){
+      if(isAdmin()){
+        adminStatusEl.innerHTML='<span style="color:var(--green-text)">&#10003; Ingelogd als beheerder</span>';
+        adminBtnEl.textContent='Uitloggen als beheerder';
+      } else {
+        adminStatusEl.textContent='Niet ingelogd als beheerder.';
+        adminBtnEl.textContent='Inloggen als beheerder';
+      }
+    }
+    document.getElementById('driver-list').innerHTML=state.drivers.map((d,i)=>{
+      const idx=i%5;
+      return`<div class="driver-row">
+        <div class="avatar avatar-lg" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${initials(d)}</div>
+        <span style="flex:1;font-size:15px;font-weight:500">${d}</span>
+        <button class="btn btn-danger" style="padding:10px 14px;font-size:13px;min-height:44px" onclick="removeDriver('${d}')">&#128274; Verwijder</button>
+      </div>`;
+    }).join('');
+    document.getElementById('start-km').value=state.startKm||'';
+    const gemVerbruik=berekenGemVerbruik();
+    if(gemVerbruik!==null){
+      document.getElementById('verbruik-input').value=gemVerbruik.toFixed(1);
+      document.getElementById('verbruik-berekend').textContent=`Automatisch berekend op basis van ${state.tankbeurten.length} tankbeurt(en): 1 op ${gemVerbruik.toFixed(1)} km/ltr`;
+      localStorage.setItem(VERBRUIK_KEY,gemVerbruik.toFixed(1));
+    }else{
+      document.getElementById('verbruik-input').value=getVerbruik();
+      document.getElementById('verbruik-berekend').textContent='Nog geen tankbeurten om verbruik te berekenen.';
+    }
+  }
+
+  async function addDriver(){requireAdmin(async()=>{
+    const name=document.getElementById('new-driver-name').value.trim();
+    const fb=document.getElementById('driver-feedback');
+    if(!name||state.drivers.includes(name))return;
+    fb.style.color='var(--text-secondary)';fb.textContent='Opslaan...';
+    state.drivers.push(name);document.getElementById('new-driver-name').value='';
+    try{await apiPost({action:'saveDrivers',drivers:state.drivers});fb.style.color='var(--green-text)';fb.textContent=`✓ ${name} toegevoegd`;}
+    catch(e){fb.style.color='#ff7070';fb.textContent='Fout bij opslaan.';}
+    renderSettings();
+  });
+  }
+  async function removeDriver(name){requireAdmin(async()=>{
+    if(!confirm(`${name} verwijderen?`))return;
+    state.drivers=state.drivers.filter(d=>d!==name);
+    try{await apiPost({action:'saveDrivers',drivers:state.drivers});}catch(e){console.error(e);}
+    renderSettings();
+  });
+  }
+  function saveStartKm(){requireAdmin(()=>{const km=parseInt(document.getElementById('start-km').value);if(!isNaN(km)){state.startKm=km;localStorage.setItem('startKm',km);alert('Beginstand opgeslagen!');}});}
+  function saveVerbruik(){requireAdmin(()=>{const v=parseFloat(document.getElementById('verbruik-input').value);if(!isNaN(v)&&v>0){localStorage.setItem(VERBRUIK_KEY,v);alert(`Verbruik opgeslagen: 1 op ${v} km`);} });}
+
+  checkSession();
+</script>
+</body>
+</html>
