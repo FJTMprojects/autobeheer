@@ -464,7 +464,11 @@
     editingTankIdx=null;
   }
   async function deleteTankbeurt(idx){
-    if(!isAdmin()){alert('Alleen de beheerder kan tankbeurten verwijderen.');return;}
+    if(!isAdmin()){
+      const pw=prompt('Beheerderswachtwoord:');
+      if(pw&&pw.toLowerCase()===ADMIN_PW){sessionStorage.setItem(ADMIN_KEY,'ok');}
+      else{if(pw!==null)alert('Onjuist wachtwoord.');return;}
+    }
     const realIdx=state.tankbeurten.length-1-idx;
     const t=state.tankbeurten[realIdx];
     if(!confirm(`Tankbeurt verwijderen?\n${(+t.liters).toFixed(2)} liter @ € ${(+t.prijs).toFixed(3)} op ${formatDate(t.datum)}`))return;
@@ -510,7 +514,11 @@
     editingRitIdx=null;
   }
   async function deleteRit(idx){
-    if(!isAdmin()){alert('Alleen de beheerder kan ritten verwijderen.');return;}
+    if(!isAdmin()){
+      const pw=prompt('Beheerderswachtwoord:');
+      if(pw&&pw.toLowerCase()===ADMIN_PW){sessionStorage.setItem(ADMIN_KEY,'ok');}
+      else{if(pw!==null)alert('Onjuist wachtwoord.');return;}
+    }
     const r=state.ritten[idx];
     if(!confirm(`Rit verwijderen?\n${r.driver} · ${formatDate(r.datum)} · ${r.km} km`))return;
     state.ritten.splice(idx,1);
@@ -543,12 +551,16 @@
     if(isAdmin()){
       sessionStorage.removeItem(ADMIN_KEY);
       renderSettings();
+      renderTankHistory();
+      renderRitList();
     } else {
       const pw=prompt('Beheerderswachtwoord:');
       if(pw&&pw.toLowerCase()===ADMIN_PW){
         sessionStorage.setItem(ADMIN_KEY,'ok');
         renderSettings();
         renderTankHistory();
+        renderRitList();
+        alert('✓ Ingelogd als beheerder');
       } else if(pw!==null){alert('Onjuist wachtwoord.');}
     }
   }
@@ -670,7 +682,8 @@
     const actueleKm=state.ritten.length>0?+state.ritten[state.ritten.length-1].eindKm:state.startKm;
     const lastTankKm=state.tankbeurten.length>0?+state.tankbeurten[state.tankbeurten.length-1].km:state.startKm;
     const sindsLaatstTank=Math.max(0,actueleKm-lastTankKm);
-    const tankPct=Math.max(0,Math.min(100,100-(sindsLaatstTank/600*100)));
+    // Als er geen tankbeurten zijn maar wel een startKm, toon 100% (volle tank bij start)
+    const tankPct=state.tankbeurten.length===0&&state.startKm>0?100:Math.max(0,Math.min(100,100-(sindsLaatstTank/600*100)));
     const barColor=tankPct<20?'#E24B4A':tankPct<40?'#f97316':'#E8FF00';
     const kmPerDriver={};
     state.drivers.forEach(d=>{kmPerDriver[d]=0;});
@@ -706,7 +719,7 @@
       <div class="sync-bar"><div class="sync-dot" style="${state.loadError?'background:#ff7070':''}"></div>${state.loadError?'Verbindingsfout &mdash; controleer je internet en vernieuw':'Gesynchroniseerd met Google Sheets'}</div>
       <div class="hero-card">
         <div class="hero-lbl">Actuele kilometerstand</div>
-        <div class="hero-km">${actueleKm.toLocaleString('nl-NL')}</div>
+        <div class="hero-km">${actueleKm>0?actueleKm.toLocaleString('nl-NL'):state.startKm>0?state.startKm.toLocaleString('nl-NL'):'—'}</div>
         <div style="margin-top:10px;display:flex;gap:20px">
           <div><div style="font-size:22px;font-weight:700;color:var(--text)">${kmVandaag}</div><div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-secondary);margin-top:2px">km vandaag</div></div>
           <div><div style="font-size:22px;font-weight:700;color:var(--text)">${aantalVandaag}</div><div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-secondary);margin-top:2px">ritten vandaag</div></div>
@@ -770,7 +783,7 @@
           <div style="font-weight:700;font-size:15px">${km} km</div>
           ${kosten!==null?`<div style="font-size:13px;font-weight:700;color:var(--green-text)">&#8364; ${kosten.toFixed(2)}</div>`:''}
           ${kanBewerken?`<button onclick="openEditRit(${ritIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--border-hover);background:var(--bg-card2);color:var(--text-secondary);cursor:pointer;min-height:0">&#9998; Bewerk</button>`:''}
-          ${isAdmin()?`<button onclick="deleteRit(${ritIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid rgba(226,75,74,0.3);background:rgba(226,75,74,0.08);color:#E24B4A;cursor:pointer;min-height:0">&#128465; Verwijder</button>`:''}
+          <button onclick="deleteRit(${ritIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid rgba(226,75,74,0.3);background:rgba(226,75,74,0.08);color:#E24B4A;cursor:pointer;min-height:0">&#128465; Verwijder</button>
         </div>
       </div>`;
     }).join('');
@@ -903,7 +916,7 @@
         <div style="text-align:right;flex-shrink:0;margin-left:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <div style="font-weight:700;font-size:15px">&#8364; ${(+t.totaal).toFixed(2)}</div>
           <button onclick="openEditTank(${tankIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--border-hover);background:var(--bg-card2);color:var(--text-secondary);cursor:pointer;min-height:0">&#9998; Bewerk</button>
-          ${isAdmin()?`<button onclick="deleteTankbeurt(${tankIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid rgba(226,75,74,0.3);background:rgba(226,75,74,0.08);color:#E24B4A;cursor:pointer;min-height:0">&#128465; Verwijder</button>`:''}
+          <button onclick="deleteTankbeurt(${tankIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid rgba(226,75,74,0.3);background:rgba(226,75,74,0.08);color:#E24B4A;cursor:pointer;min-height:0">&#128465; Verwijder</button>
         </div>
       </div>`;
     }).join('');
@@ -1100,7 +1113,15 @@
     renderSettings();
   });
   }
-  function saveStartKm(){requireAdmin(()=>{const km=parseInt(document.getElementById('start-km').value);if(!isNaN(km)){state.startKm=km;localStorage.setItem('startKm',km);alert('Beginstand opgeslagen!');}});}
+  function saveStartKm(){requireAdmin(async()=>{
+    const km=parseInt(document.getElementById('start-km').value);
+    if(!isNaN(km)){
+      state.startKm=km;
+      try{await apiPost({action:'saveInstellingen',startKm:km,verbruik:getVerbruik()});}catch(e){console.error(e);}
+      alert('✓ Beginstand opgeslagen!');
+      renderDashboard();
+    }
+  });}
   function saveVerbruik(){requireAdmin(async()=>{
     const v=parseFloat(document.getElementById('verbruik-input').value);
     if(!isNaN(v)&&v>0){
