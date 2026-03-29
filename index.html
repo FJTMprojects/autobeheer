@@ -420,14 +420,14 @@
 
 <script>
   const PASSWORD='2651ta', SESSION_KEY='autobeheer_auth', ADMIN_PW='admin', ADMIN_KEY='autobeheer_admin';
-  const API='https://script.google.com/macros/s/AKfycbwpdw-Z66sOF1_MVaYYIxYYE_hfvfhaKfNuqY_QYEPe-SKoyExRxkvREHXPhDgTp9UQ/exec';
+  const API='https://script.google.com/macros/s/AKfycbyrellEzVYWY2mM64buk3gcvfCJecZlP3TV7C2htfJNHrlUy9LIGMn_miqa1XUT22D6/exec';
   const VERBRUIK_KEY='autobeheer_verbruik';
   const MAANDEN=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
   const COLORS=['#E8FF00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
   const BG_C=['rgba(232,255,0,0.1)','rgba(78,207,158,0.1)','rgba(96,165,250,0.1)','rgba(249,115,22,0.1)','rgba(232,121,249,0.1)'];
   const TEXT_C=['#c8dc00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
 
-  let state={drivers:['Anna','Bas','Chris'],ritten:[],tankbeurten:[],startKm:parseInt(localStorage.getItem('startKm')||'0'),loaded:false};
+  let state={drivers:['Anna','Bas','Chris'],ritten:[],tankbeurten:[],startKm:0,loaded:false};
   let kostenPeriod='maand';
 
   function getVerbruik(){return parseFloat(localStorage.getItem(VERBRUIK_KEY)||'19.2');}
@@ -607,10 +607,17 @@
   async function apiPost(b){await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)});}
   async function loadAll(){
     try{
-      const[ri,ta,dr]=await Promise.all([apiFetch({action:'getRitten'}),apiFetch({action:'getTankbeurten'}),apiFetch({action:'getDrivers'})]);
+      const[ri,ta,dr,instellingen]=await Promise.all([
+        apiFetch({action:'getRitten'}),
+        apiFetch({action:'getTankbeurten'}),
+        apiFetch({action:'getDrivers'}),
+        apiFetch({action:'getInstellingen'})
+      ]);
       state.ritten=Array.isArray(ri)?ri:[];
       state.tankbeurten=Array.isArray(ta)?ta:[];
       state.drivers=Array.isArray(dr)?dr:['Anna','Bas','Chris'];
+      if(instellingen&&instellingen.startKm) state.startKm=parseInt(instellingen.startKm)||0;
+      if(instellingen&&instellingen.verbruik) localStorage.setItem(VERBRUIK_KEY, instellingen.verbruik);
       state.loaded=true;
       state.loadError=false;
     }catch(e){
@@ -706,8 +713,18 @@
 
   function renderRitTab(){
     const sel=document.getElementById('rit-driver');
-    sel.innerHTML=state.drivers.map(d=>`<option>${d}</option>`).join('');
-    const lastKm=state.ritten.length>0?state.ritten[state.ritten.length-1].eindKm:state.startKm||'';
+    const currentUser=getCurrentUser();
+    if(currentUser&&!isAdmin()){
+      // Bestuurder ziet alleen zichzelf
+      sel.innerHTML=`<option>${currentUser}</option>`;
+    } else {
+      // Beheerder ziet iedereen
+      sel.innerHTML=state.drivers.map(d=>`<option>${d}</option>`).join('');
+    }
+    // Beginstand = eindstand laatste rit van deze bestuurder
+    const eigeneRitten=state.ritten.filter(r=>!currentUser||isAdmin()||r.driver===currentUser);
+    const lastRit=eigeneRitten.length>0?eigeneRitten[eigeneRitten.length-1]:null;
+    const lastKm=lastRit?lastRit.eindKm:(state.startKm||'');
     document.getElementById('rit-start').value=lastKm||'';
     document.getElementById('rit-datum').value=todayStr();
     renderRitList();
@@ -1065,7 +1082,14 @@
   });
   }
   function saveStartKm(){requireAdmin(()=>{const km=parseInt(document.getElementById('start-km').value);if(!isNaN(km)){state.startKm=km;localStorage.setItem('startKm',km);alert('Beginstand opgeslagen!');}});}
-  function saveVerbruik(){requireAdmin(()=>{const v=parseFloat(document.getElementById('verbruik-input').value);if(!isNaN(v)&&v>0){localStorage.setItem(VERBRUIK_KEY,v);alert(`Verbruik opgeslagen: 1 op ${v} km`);} });}
+  function saveVerbruik(){requireAdmin(async()=>{
+    const v=parseFloat(document.getElementById('verbruik-input').value);
+    if(!isNaN(v)&&v>0){
+      localStorage.setItem(VERBRUIK_KEY,v);
+      try{await apiPost({action:'saveInstellingen',startKm:state.startKm,verbruik:v});}catch(e){console.error(e);}
+      alert(`Verbruik opgeslagen: 1 op ${v} km`);
+    }
+  });}
 
   checkSession();
 </script>
