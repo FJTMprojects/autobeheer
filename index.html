@@ -301,6 +301,9 @@
     <button class="tab" onclick="showTab('kosten')" title="Kosten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6.5A7 7 0 1 0 18 17.5"/><line x1="3" y1="11" x2="14" y2="11"/><line x1="3" y1="13" x2="14" y2="13"/></svg>
     </button>
+    <button class="tab" onclick="showTab('archief')" title="Archief">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+    </button>
     <button class="tab" onclick="showTab('instellingen')" title="Instellingen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -381,6 +384,39 @@
 
     <div id="tab-kosten" class="section">
       <div id="kosten-content"><div class="loading">Laden...</div></div>
+    </div>
+
+    <div id="tab-archief" class="section">
+      <div class="card">
+        <div class="card-title">Zoeken &amp; filteren</div>
+        <div class="form-group">
+          <label>Bestuurder</label>
+          <select id="archief-driver">
+            <option value="">Alle bestuurders</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="form-group">
+            <label>Van datum</label>
+            <input type="date" id="archief-van">
+          </div>
+          <div class="form-group">
+            <label>Tot datum</label>
+            <input type="date" id="archief-tot">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Zoek op omschrijving</label>
+          <input type="text" id="archief-zoek" placeholder="bv. werk, boodschappen...">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="filterArchief()">Zoeken</button>
+        <button class="btn btn-full" style="margin-top:8px" onclick="resetArchief()">Wis filters</button>
+      </div>
+      <div id="archief-totalen"></div>
+      <div class="card">
+        <div class="card-title">Ritten</div>
+        <div id="archief-lijst"><div class="empty">Gebruik de filters om ritten te zoeken</div></div>
+      </div>
     </div>
 
     <div id="tab-instellingen" class="section">
@@ -565,6 +601,90 @@
       } else if(pw!==null){alert('Onjuist wachtwoord.');}
     }
   }
+  function initArchief(){
+    // Vul bestuurder dropdown
+    const sel=document.getElementById('archief-driver');
+    sel.innerHTML='<option value="">Alle bestuurders</option>'+
+      state.drivers.map(d=>`<option value="${d}">${d}</option>`).join('');
+    // Toon alle ritten standaard
+    filterArchief();
+  }
+
+  function filterArchief(){
+    const driver=document.getElementById('archief-driver').value;
+    const van=document.getElementById('archief-van').value;
+    const tot=document.getElementById('archief-tot').value;
+    const zoek=document.getElementById('archief-zoek').value.toLowerCase().trim();
+    const ppk=getPrijsPerKm();
+    const verbruik=getVerbruik();
+
+    let ritten=[...state.ritten];
+
+    // Filter op bestuurder
+    if(driver) ritten=ritten.filter(r=>r.driver===driver);
+    // Filter op datum van
+    if(van) ritten=ritten.filter(r=>r.datum&&r.datum>=van);
+    // Filter op datum tot
+    if(tot) ritten=ritten.filter(r=>r.datum&&r.datum<=tot);
+    // Filter op omschrijving
+    if(zoek) ritten=ritten.filter(r=>(r.desc||'').toLowerCase().includes(zoek));
+
+    // Sorteer nieuwste eerst
+    ritten=[...ritten].reverse();
+
+    // Totalen berekenen
+    const totKm=ritten.reduce((s,r)=>s+(+r.km),0);
+    const totKosten=ppk?ritten.reduce((s,r)=>s+ppk*(+r.km),0):null;
+    const totLiters=totKm/verbruik;
+
+    // Toon totalen
+    const totEl=document.getElementById('archief-totalen');
+    totEl.innerHTML=ritten.length>0?`<div class="card" style="margin-bottom:12px">
+      <div class="card-title">Totalen (${ritten.length} ritten)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr${totKosten!==null?' 1fr':''};gap:10px">
+        <div class="metric"><div class="metric-val">${totKm}</div><div class="metric-lbl">km</div></div>
+        <div class="metric"><div class="metric-val">${totLiters.toFixed(1)}</div><div class="metric-lbl">liter</div></div>
+        ${totKosten!==null?`<div class="metric"><div class="metric-val">&#8364; ${totKosten.toFixed(2)}</div><div class="metric-lbl">kosten</div></div>`:''}
+      </div>
+    </div>`:'';
+
+    // Toon ritten
+    const lijstEl=document.getElementById('archief-lijst');
+    if(!ritten.length){
+      lijstEl.innerHTML='<div class="empty">Geen ritten gevonden</div>';
+      return;
+    }
+
+    lijstEl.innerHTML=ritten.map(r=>{
+      const idx=ci(r.driver);
+      const km=+r.km;
+      const kosten=ppk?ppk*km:null;
+      const liters=km/verbruik;
+      return`<div class="rit-row">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+            <span class="badge" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${r.driver}</span>
+            ${r.desc?`<span style="color:var(--text-secondary);font-size:13px">${r.desc}</span>`:''}
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary)">${formatDate(r.datum)} &middot; ${r.startKm} &#8594; ${r.eindKm} km</div>
+          ${kosten!==null?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${liters.toFixed(1)} liter &middot; <span style="color:var(--green-text);font-weight:600">&#8364; ${kosten.toFixed(2)}</span></div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px">
+          <div style="font-weight:700;font-size:15px">${km} km</div>
+          ${kosten!==null?`<div style="font-size:13px;font-weight:700;color:var(--green-text)">&#8364; ${kosten.toFixed(2)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function resetArchief(){
+    document.getElementById('archief-driver').value='';
+    document.getElementById('archief-van').value='';
+    document.getElementById('archief-tot').value='';
+    document.getElementById('archief-zoek').value='';
+    filterArchief();
+  }
+
   function checkSession(){
     if(sessionStorage.getItem(SESSION_KEY)==='ok'){
       const savedUser=sessionStorage.getItem('currentUser');
@@ -645,7 +765,17 @@
     document.getElementById('login-step2').style.display='none';
   }
 
-  async function apiFetch(p){const r=await fetch(API+'?'+new URLSearchParams(p));return r.json();}
+  async function apiFetch(p, retries=2){
+    for(let i=0;i<=retries;i++){
+      try{
+        const r=await fetch(API+'?'+new URLSearchParams(p));
+        return r.json();
+      }catch(e){
+        if(i===retries) throw e;
+        await new Promise(res=>setTimeout(res,1000));
+      }
+    }
+  }
   async function apiPost(b){await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)});}
   async function loadAll(){
     try{
@@ -681,12 +811,13 @@
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(s=>s.classList.remove('active'));
     document.getElementById('tab-'+t).classList.add('active');
-    const map={dashboard:0,rit:1,tanken:2,kosten:3,instellingen:4};
+    const map={dashboard:0,rit:1,tanken:2,kosten:3,archief:4,instellingen:5};
     if(map[t]!==undefined)document.querySelectorAll('.tab')[map[t]].classList.add('active');
     if(t==='dashboard')renderDashboard();
     if(t==='rit')renderRitTab();
     if(t==='tanken')renderTankTab();
     if(t==='kosten')renderKosten();
+    if(t==='archief')initArchief();
     if(t==='instellingen')renderSettings();
   }
 
@@ -709,20 +840,15 @@
     const kmVandaag=rittenVandaag.reduce((s,r)=>s+(+r.km),0);
     const aantalVandaag=rittenVandaag.length;
     const ppk=getPrijsPerKm();
-    const kmVandaagPerDriver={};
-    state.drivers.forEach(d=>{kmVandaagPerDriver[d]=0;});
-    rittenVandaag.forEach(r=>{if(kmVandaagPerDriver[r.driver]!==undefined)kmVandaagPerDriver[r.driver]+=(+r.km);});
     const dStats=state.drivers.map((d,i)=>{
       const km=kmPerDriver[d]||0,pct=totaalKm>0?Math.round(km/totaalKm*100):0,idx=i%5;
       const kosten=ritKosten(km);
-      const kmHvandaag=kmVandaagPerDriver[d]||0;
       return`<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
         <div class="avatar avatar-lg" style="background:${BG_C[idx]};color:${TEXT_C[idx]}">${initials(d)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:15px;font-weight:700">${d}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
             <span style="color:var(--text);font-weight:600">${km} km totaal</span>
-            ${kmHvandaag>0?`&middot; <span style="color:var(--accent);font-weight:600">${kmHvandaag} km vandaag</span>`:''}
             ${kosten!==null?` &middot; <span style="color:var(--green-text);font-weight:600">&#8364; ${kosten.toFixed(2)}</span>`:''}
           </div>
           <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${COLORS[idx]}"></div></div>
