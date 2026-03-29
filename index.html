@@ -420,7 +420,7 @@
 
 <script>
   const PASSWORD='2651ta', SESSION_KEY='autobeheer_auth', ADMIN_PW='admin', ADMIN_KEY='autobeheer_admin';
-  const API='https://script.google.com/macros/s/AKfycbyrellEzVYWY2mM64buk3gcvfCJecZlP3TV7C2htfJNHrlUy9LIGMn_miqa1XUT22D6/exec';
+  const API='https://script.google.com/macros/s/AKfycby6ivLAy9IIdP12sM5aBf-oHe7Rnkae--YEq8K0BTITD380jQN0hMzLidHYrRonhgVD/exec';
   const VERBRUIK_KEY='autobeheer_verbruik';
   const MAANDEN=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
   const COLORS=['#E8FF00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
@@ -463,6 +463,15 @@
     document.getElementById('edit-tank-modal').style.display='none';
     editingTankIdx=null;
   }
+  async function deleteTankbeurt(idx){
+    if(!isAdmin()){alert('Alleen de beheerder kan tankbeurten verwijderen.');return;}
+    const realIdx=state.tankbeurten.length-1-idx;
+    const t=state.tankbeurten[realIdx];
+    if(!confirm(`Tankbeurt verwijderen?\n${(+t.liters).toFixed(2)} liter @ € ${(+t.prijs).toFixed(3)} op ${formatDate(t.datum)}`))return;
+    state.tankbeurten.splice(realIdx,1);
+    try{await apiPost({action:'deleteTankbeurt',index:realIdx});}catch(e){console.error(e);}
+    renderTankHistory();
+  }
   async function saveEditTank(){
     const fb=document.getElementById('edit-tank-feedback');
     const betaler=document.getElementById('edit-tank-betaler').value;
@@ -499,6 +508,14 @@
   function closeEditRit(){
     document.getElementById('edit-modal').style.display='none';
     editingRitIdx=null;
+  }
+  async function deleteRit(idx){
+    if(!isAdmin()){alert('Alleen de beheerder kan ritten verwijderen.');return;}
+    const r=state.ritten[idx];
+    if(!confirm(`Rit verwijderen?\n${r.driver} · ${formatDate(r.datum)} · ${r.km} km`))return;
+    state.ritten.splice(idx,1);
+    try{await apiPost({action:'deleteRit',index:idx});}catch(e){console.error(e);}
+    renderRitList();
   }
   async function saveEditRit(){
     const fb=document.getElementById('edit-feedback');
@@ -753,6 +770,7 @@
           <div style="font-weight:700;font-size:15px">${km} km</div>
           ${kosten!==null?`<div style="font-size:13px;font-weight:700;color:var(--green-text)">&#8364; ${kosten.toFixed(2)}</div>`:''}
           ${kanBewerken?`<button onclick="openEditRit(${ritIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--border-hover);background:var(--bg-card2);color:var(--text-secondary);cursor:pointer;min-height:0">&#9998; Bewerk</button>`:''}
+          ${isAdmin()?`<button onclick="deleteRit(${ritIdx})" style="font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid rgba(226,75,74,0.3);background:rgba(226,75,74,0.08);color:#E24B4A;cursor:pointer;min-height:0">&#128465; Verwijder</button>`:''}
         </div>
       </div>`;
     }).join('');
