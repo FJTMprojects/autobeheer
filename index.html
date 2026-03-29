@@ -469,7 +469,7 @@
   const BG_C=['rgba(232,255,0,0.1)','rgba(78,207,158,0.1)','rgba(96,165,250,0.1)','rgba(249,115,22,0.1)','rgba(232,121,249,0.1)'];
   const TEXT_C=['#c8dc00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
 
-  const _cachedDrivers=sessionStorage.getItem('cachedDrivers');
+  const _cachedDrivers=localStorage.getItem('cachedDrivers');
   let state={drivers:_cachedDrivers?JSON.parse(_cachedDrivers):['Anna','Bas','Chris'],ritten:[],tankbeurten:[],startKm:0,loaded:false};
   let kostenPeriod='maand';
 
@@ -795,7 +795,7 @@
       state.tankbeurten=Array.isArray(ta)?ta:[];
       state.drivers=Array.isArray(dr)?dr:['Anna','Bas','Chris'];
       // Sla bestuurders op in sessionStorage voor snelle weergave
-      sessionStorage.setItem('cachedDrivers', JSON.stringify(state.drivers));
+      localStorage.setItem('cachedDrivers', JSON.stringify(state.drivers));
       if(instellingen&&instellingen.startKm) state.startKm=parseInt(instellingen.startKm)||0;
       if(instellingen&&instellingen.verbruik) localStorage.setItem(VERBRUIK_KEY, instellingen.verbruik);
       state.loaded=true;
