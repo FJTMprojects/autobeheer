@@ -818,17 +818,35 @@
   }
   function parseDatum(datum){
     if(!datum) return '';
-    const s=String(datum);
-    // Als het een ISO datum-string is met tijd (van Sheets), gebruik lokale datum
-    if(s.includes('T')){
-      // Sheets geeft UTC terug, corrigeer naar lokale datum
+    const s=String(datum).trim();
+    // Gewone YYYY-MM-DD string
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0,10);
+    // ISO string met tijd (van Sheets): 2026-03-29T22:00:00.000Z
+    if(s.includes('T') || s.includes('Z')){
       const d=new Date(s);
       const y=d.getFullYear();
       const m=String(d.getMonth()+1).padStart(2,'0');
       const day=String(d.getDate()).padStart(2,'0');
       return `${y}-${m}-${day}`;
     }
-    // Gewone YYYY-MM-DD string
+    // Uitgeschreven datum: "Sun Mar 29 2026 ..." of "Mon Mar 30 2026 ..."
+    if(/^[A-Za-z]/.test(s)){
+      const d=new Date(s);
+      if(!isNaN(d.getTime())){
+        const y=d.getFullYear();
+        const m=String(d.getMonth()+1).padStart(2,'0');
+        const day=String(d.getDate()).padStart(2,'0');
+        return `${y}-${m}-${day}`;
+      }
+    }
+    // Fallback: probeer direct te parsen
+    const d=new Date(s);
+    if(!isNaN(d.getTime())){
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,'0');
+      const day=String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
     return s.substring(0,10);
   }
   function formatDate(iso){
