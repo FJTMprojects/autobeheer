@@ -809,7 +809,13 @@
 
   function initials(n){return n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();}
   function driverIndex(n){return state.drivers.indexOf(n);}
-  function todayStr(){return new Date().toISOString().split('T')[0];}
+  function todayStr(){
+    const d=new Date();
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,'0');
+    const day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
   function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}-${m}-${y}`;}
   function ci(name){const i=driverIndex(name);return i>=0?i%5:0;}
 
@@ -900,9 +906,8 @@
       // Beheerder ziet iedereen
       sel.innerHTML=state.drivers.map(d=>`<option>${d}</option>`).join('');
     }
-    // Beginstand = eindstand laatste rit van deze bestuurder
-    const eigeneRitten=state.ritten.filter(r=>!currentUser||isAdmin()||r.driver===currentUser);
-    const lastRit=eigeneRitten.length>0?eigeneRitten[eigeneRitten.length-1]:null;
+    // Beginstand = eindstand van de laatste rit van de auto (ongeacht bestuurder)
+    const lastRit=state.ritten.length>0?state.ritten[state.ritten.length-1]:null;
     const lastKm=lastRit?lastRit.eindKm:(state.startKm||'');
     document.getElementById('rit-start').value=lastKm||'';
     document.getElementById('rit-datum').value=todayStr();
