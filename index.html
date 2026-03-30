@@ -629,9 +629,9 @@
     // Filter op bestuurder
     if(driver) ritten=ritten.filter(r=>r.driver===driver);
     // Filter op datum van
-    if(van) ritten=ritten.filter(r=>r.datum&&r.datum>=van);
+    if(van) ritten=ritten.filter(r=>r.datum&&parseDatum(r.datum)>=van);
     // Filter op datum tot
-    if(tot) ritten=ritten.filter(r=>r.datum&&r.datum<=tot);
+    if(tot) ritten=ritten.filter(r=>r.datum&&parseDatum(r.datum)<=tot);
     // Filter op omschrijving
     if(zoek) ritten=ritten.filter(r=>(r.desc||'').toLowerCase().includes(zoek));
 
@@ -816,7 +816,27 @@
     const day=String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${day}`;
   }
-  function formatDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}-${m}-${y}`;}
+  function parseDatum(datum){
+    if(!datum) return '';
+    const s=String(datum);
+    // Als het een ISO datum-string is met tijd (van Sheets), gebruik lokale datum
+    if(s.includes('T')){
+      // Sheets geeft UTC terug, corrigeer naar lokale datum
+      const d=new Date(s);
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,'0');
+      const day=String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+    // Gewone YYYY-MM-DD string
+    return s.substring(0,10);
+  }
+  function formatDate(iso){
+    const s=parseDatum(iso);
+    if(!s) return '';
+    const[y,m,d]=s.split('-');
+    return `${d}-${m}-${y}`;
+  }
   function ci(name){const i=driverIndex(name);return i>=0?i%5:0;}
 
   function showTab(t){
@@ -848,7 +868,7 @@
     state.ritten.forEach(r=>{if(kmPerDriver[r.driver]!==undefined)kmPerDriver[r.driver]+=(+r.km);});
     const lastPrijs=state.tankbeurten.length?(+state.tankbeurten[state.tankbeurten.length-1].prijs).toFixed(3):null;
     const vandaag=todayStr();
-    const rittenVandaag=state.ritten.filter(r=>r.datum===vandaag);
+    const rittenVandaag=state.ritten.filter(r=>parseDatum(r.datum)===vandaag);
     const kmVandaag=rittenVandaag.reduce((s,r)=>s+(+r.km),0);
     const aantalVandaag=rittenVandaag.length;
     const ppk=getPrijsPerKm();
@@ -1079,7 +1099,7 @@
   function renderKosten(){
     const el=document.getElementById('kosten-content');
     if(!state.loaded){el.innerHTML='<div class="loading">Laden...</div>';return;}
-    const alleJaren=[...state.ritten,...state.tankbeurten].map(x=>x.datum?x.datum.split('-')[0]:'').filter(Boolean);
+    const alleJaren=[...state.ritten,...state.tankbeurten].map(x=>x.datum?parseDatum(x.datum).split('-')[0]:'').filter(Boolean);
     const jaren=[...new Set(alleJaren)].sort().reverse();
     if(!jaren.length)jaren.push(String(new Date().getFullYear()));
     el.innerHTML=`
@@ -1104,9 +1124,9 @@
       const kmM={},kostenM={};
       state.drivers.forEach(d=>{kmM[d]={};kostenM[d]={};for(let m=0;m<12;m++){kmM[d][m]=0;kostenM[d][m]=0;}});
       state.ritten.forEach(r=>{
-        if(!r.datum)return;const[y,m]=r.datum.split('-');if(y!==jaar||!kmM[r.driver])return;
+        if(!r.datum)return;const _pd=parseDatum(r.datum);const[y,m]=_pd.split('-');if(y!==jaar||!kmM[r.driver])return;
         const mi=parseInt(m)-1;kmM[r.driver][mi]+=(+r.km);
-        const gt=state.tankbeurten.filter(t=>t.datum&&t.datum<=r.datum).pop();
+        const gt=state.tankbeurten.filter(t=>t.datum&&parseDatum(t.datum)<=parseDatum(r.datum)).pop();
         if(gt)kostenM[r.driver][mi]+=(+gt.prijs)/verbruik*(+r.km);
       });
       const actief=[];for(let m=0;m<12;m++){if(state.drivers.some(d=>kmM[d][m]>0))actief.push(m);}
@@ -1135,16 +1155,16 @@
         });html+=`</div>`;
       });el.innerHTML=html;
     }else{
-      const alleJaren2=[...state.ritten,...state.tankbeurten].map(x=>x.datum?x.datum.split('-')[0]:'').filter(Boolean);
+      const alleJaren2=[...state.ritten,...state.tankbeurten].map(x=>x.datum?parseDatum(x.datum).split('-')[0]:'').filter(Boolean);
       const jaren2=[...new Set(alleJaren2)].sort().reverse();
       if(!jaren2.length){el.innerHTML='<div class="empty">Nog geen data</div>';return;}
       let html='';
       jaren2.forEach(jaar=>{
         const kmPD={},kostenPD={};state.drivers.forEach(d=>{kmPD[d]=0;kostenPD[d]=0;});
         state.ritten.forEach(r=>{
-          if(!r.datum||r.datum.split('-')[0]!==jaar||!kmPD[r.driver])return;
+          if(!r.datum||parseDatum(r.datum).split('-')[0]!==jaar||!kmPD[r.driver])return;
           kmPD[r.driver]+=(+r.km);
-          const gt=state.tankbeurten.filter(t=>t.datum&&t.datum<=r.datum).pop();
+          const gt=state.tankbeurten.filter(t=>t.datum&&parseDatum(t.datum)<=parseDatum(r.datum)).pop();
           if(gt)kostenPD[r.driver]+=(+gt.prijs)/verbruik*(+r.km);
         });
         const totaal=Object.values(kostenPD).reduce((a,b)=>a+b,0);
