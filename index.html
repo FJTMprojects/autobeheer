@@ -462,7 +462,7 @@
 
 <script>
   const PASSWORD='2651ta', SESSION_KEY='autobeheer_auth', ADMIN_PW='admin', ADMIN_KEY='autobeheer_admin';
-  const API='https://script.google.com/macros/s/AKfycbxgDhQy9qqrSl4O6ohZmHBLCgZFARq3hr3VOkX2lHwbxaphyuQAIPhfllnS3mSlNbhg/exec';
+  const API='https://script.google.com/macros/s/AKfycbzcrXvfT1KadloTAeBiDRhwLxhlPr_wi1FIJ8lgkd7GC6-QguwWx5xYhMP_UmKlOrwK/exec';
   const VERBRUIK_KEY='autobeheer_verbruik';
   const MAANDEN=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
   const COLORS=['#E8FF00','#4ecf9e','#60a5fa','#f97316','#e879f9'];
@@ -970,6 +970,25 @@
     }
   }
 
+  async function forceSaveRit(driver, start, end, datum, desc){
+    const fb=document.getElementById('rit-feedback');
+    fb.style.color='var(--text-secondary)';fb.textContent='Opslaan...';
+    const km=end-start;
+    const rit={driver,startKm:start,eindKm:end,km,desc,datum};
+    try{
+      await apiPost({action:'addRit',...rit});
+      state.ritten.push(rit);
+      const kosten=ritKosten(km);
+      fb.style.color='var(--green-text)';
+      fb.textContent=`✓ ${km} km opgeslagen voor ${driver}${kosten!==null?' · €'+kosten.toFixed(2)+' brandstofkosten':''}`;
+      document.getElementById('rit-end').value='';
+      document.getElementById('rit-desc').value='';
+      document.getElementById('rit-start').value=end;
+      document.getElementById('rit-datum').value=todayStr();
+      renderRitList();
+    }catch(e){fb.style.color='#ff7070';fb.textContent='Fout bij opslaan.';}
+  }
+
   async function addRit(){
     const driver=document.getElementById('rit-driver').value;
     const start=parseInt(document.getElementById('rit-start').value);
@@ -977,7 +996,23 @@
     const datum=document.getElementById('rit-datum').value;
     const desc=document.getElementById('rit-desc').value;
     const fb=document.getElementById('rit-feedback');
-    if(!driver||isNaN(start)||isNaN(end)||end<=start){fb.style.color='#ff7070';fb.textContent='Vul geldige km-standen in (eind > begin).';return;}
+    if(!driver||isNaN(start)||isNaN(end)||end<=start){
+      fb.style.color='#ff7070';fb.textContent='Vul geldige km-standen in (eind > begin).';return;
+    }
+    // Controleer of beginstand aansluit op laatste rit
+    const verwachteStart=state.ritten.length>0?+state.ritten[state.ritten.length-1].eindKm:state.startKm;
+    if(verwachteStart>0 && start!==verwachteStart){
+      const verschil=start-verwachteStart;
+      const richting=verschil>0?`${verschil} km te hoog`:`${Math.abs(verschil)} km te laag`;
+      fb.style.color='#f97316';
+      fb.textContent=`⚠️ Beginstand klopt niet: verwacht ${verwachteStart} km (${richting}). Kloppen de gegevens?`;
+      // Toon bevestigingsknop om toch op te slaan
+      fb.innerHTML+=`<br><button onclick="forceSaveRit('${driver}',${start},${end},'${datum}',\`${desc.replace(/`/g,"'")}\`)" 
+        style="margin-top:8px;padding:8px 14px;border-radius:8px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;font-size:13px;cursor:pointer;">
+        Toch opslaan
+      </button>`;
+      return;
+    }
     fb.style.color='var(--text-secondary)';fb.textContent='Opslaan...';
     const km=end-start,rit={driver,startKm:start,eindKm:end,km,desc,datum};
     try{
