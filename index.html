@@ -886,10 +886,7 @@
     state.ritten.forEach(r=>{if(kmPerDriver[r.driver]!==undefined)kmPerDriver[r.driver]+=(+r.km);});
     const lastPrijs=state.tankbeurten.length?(+state.tankbeurten[state.tankbeurten.length-1].prijs).toFixed(3):null;
     const vandaag=todayStr();
-    console.log('Vandaag:', vandaag);
-    console.log('Ritten datums:', state.ritten.map(r=>({raw:r.datum, parsed:parseDatum(r.datum)})));
     const rittenVandaag=state.ritten.filter(r=>parseDatum(r.datum)===vandaag);
-    console.log('Ritten vandaag:', rittenVandaag.length);
     const kmVandaag=rittenVandaag.reduce((s,r)=>s+(+r.km),0);
     const aantalVandaag=rittenVandaag.length;
     const ppk=getPrijsPerKm();
@@ -911,7 +908,7 @@
     }).join('');
     el.innerHTML=`
       <div class="sync-bar"><div class="sync-dot" style="${state.loadError?'background:#ff7070':''}"></div>${state.loadError?'Verbindingsfout &mdash; controleer je internet en vernieuw':'Gesynchroniseerd met Google Sheets'}</div>
-      <div style="font-size:10px;color:var(--text-secondary);margin-bottom:8px">Vandaag: ${vandaag} &middot; Eerste rit datum: ${state.ritten.length>0?parseDatum(state.ritten[0].datum):'geen'} &middot; Ritten vandaag: ${aantalVandaag}</div>
+
       <div class="hero-card">
         <div class="hero-lbl">Actuele kilometerstand</div>
         <div class="hero-km">${actueleKm>0?actueleKm.toLocaleString('nl-NL'):state.startKm>0?state.startKm.toLocaleString('nl-NL'):'—'}</div>
@@ -1370,8 +1367,7 @@
     if('serviceWorker' in navigator){
       window.addEventListener('load', ()=>{
         navigator.serviceWorker.register('sw.js')
-          .then(reg=>console.log('SW registered'))
-          .catch(err=>console.log('SW error:', err));
+          .then(reg=>
       });
     }
   </script>
