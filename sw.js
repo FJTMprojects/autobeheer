@@ -1,4 +1,4 @@
-const CACHE_NAME = 'autobeheer-v3';
+const CACHE_NAME = 'autobeheer-v4';
 const ASSETS = [
   '/autobeheer/',
   '/autobeheer/index.html',
